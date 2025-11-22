@@ -26,7 +26,7 @@ def image_loader(dir_path:str, scale:float=2):
 
 def distortion_coefficient_loader():
     '''
-    This method will load the  distortion coefficient if it founds it.
+    This function will load the distortion coefficients if it founds the file.
     It will return an empty numpy array otherwise. 
     The expected dist_coeff.txt should look like k1 k2 p1 p2 k3
     '''
