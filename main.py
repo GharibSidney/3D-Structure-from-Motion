@@ -40,10 +40,9 @@ def distortion_coefficient_loader():
         line = f.readline().strip()
 
         if not line:
-            return np.zeros((5, 1), dtype=np.float32)# If file is empty or line is empty →  return zeros
+            return np.zeros((5, 1), dtype=np.float32) # If file is empty or line is empty → return zeros
 
-        # Parse the distortion coefficients
-        dist_coeff = np.array(line.split(), dtype=np.float32).reshape(-1, 1) # reshape(-1, 1) does shape: (5,) → shape: (5, 1), for OpenCV compatibility
+        dist_coeff = np.array(line.split(), dtype=np.float32).reshape(-1, 1) # reshape(-1, 1) applies shape: (5,) → shape: (5, 1), for OpenCV compatibility
         return dist_coeff
 
 
