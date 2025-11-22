@@ -24,6 +24,27 @@ def image_loader(dir_path:str, scale:float=2):
 
     return img_list, K
 
+def distortion_coefficient_loader():
+    '''
+    This method will load the  distortion coefficient if it founds it.
+    It will return an empty numpy array otherwise.
+    '''
+    path = "dist_coeff.txt"
+
+    if not os.path.exists(path): 
+        print(path, "not found → returning zeros")
+        return np.zeros((5, 1), dtype=np.float32)  # If file does not exist → return zeros
+
+    with open(path, "r") as f:
+        line = f.readline().strip()
+
+        if not line:
+            return np.zeros((5, 1), dtype=np.float32)# If file is empty or line is empty →  return zeros
+
+        # Parse the distortion coefficients
+        dist_coeff = np.array(line.split(), dtype=np.float32).reshape(-1, 1) # reshape(-1, 1) does shape: (5,) → shape: (5, 1), for OpenCV compatibility
+        return dist_coeff
+
 
 def downscale_image(img, scale=2):
     for _ in range(1, int(scale / 2) + 1):
@@ -183,7 +204,8 @@ def run(img_dir:str,apply_bundle_adjustment:boolean=False):
     cv2.namedWindow('image', cv2.WINDOW_NORMAL)
     image_list, K = image_loader(img_dir)
     pose_array = K.ravel()
-
+    dist_coeff = distortion_coefficient_loader()
+    
     transform_matrix_0 = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]])
     transform_matrix_1 = np.empty((3, 4))
 
@@ -212,7 +234,7 @@ def run(img_dir:str,apply_bundle_adjustment:boolean=False):
     feature_0, feature_1, points_3d = triangulation(pose_0, pose_1, feature_0, feature_1)
     error, points_3d = reprojection_error(points_3d, feature_1, transform_matrix_1, K, homogenity = 1)
         #ideally error < 1
-    _, _, feature_1, points_3d, _ = pnp(points_3d, feature_1, K, np.zeros((5, 1), dtype=np.float32), feature_0, initial=1)
+    _, _, feature_1, points_3d, _ = pnp(points_3d, feature_1, K, dist_coeff, feature_0, initial=1)
     total_images = len(image_list) - 2 
     pose_array = np.hstack((np.hstack((pose_array, pose_0.ravel())), pose_1.ravel()))
     threshold = 0.5
@@ -231,7 +253,7 @@ def run(img_dir:str,apply_bundle_adjustment:boolean=False):
         cm_points_2 = features_2[cm_points_1]
         cm_points_cur = features_cur[cm_points_1]
 
-        rot_matrix, tran_matrix, cm_points_2, points_3d, cm_points_cur = pnp(points_3d[cm_points_0], cm_points_2, K, np.zeros((5, 1), dtype=np.float32), cm_points_cur, initial = 0)
+        rot_matrix, tran_matrix, cm_points_2, points_3d, cm_points_cur = pnp(points_3d[cm_points_0], cm_points_2, K, dist_coeff, cm_points_cur, initial = 0)
         print(rot_matrix.shape)
         print(tran_matrix.shape)
         transform_matrix_1 = np.hstack((rot_matrix, tran_matrix))
